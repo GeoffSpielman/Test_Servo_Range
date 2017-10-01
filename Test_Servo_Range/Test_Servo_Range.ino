@@ -21,8 +21,7 @@ const int MIN_ANGLE = 21; //stops moving at 20
 const int REST_ANGLE = 92;
 const int ANGLE_INCREMENT = 1;
 
-const int LED = 13;
- 
+
 #include <Servo.h>
 
 Servo pitchServo;  // create servo object to control a servo
@@ -73,15 +72,5 @@ void loop() {
         pitchServo.write(pitchPos); 
         break;
   }
-}
-
-void blinkLED(int times){
-  for (int i = 0; i < times; i ++){
-    digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
-    delay(200);              // wait for a second
-    digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
-    delay(200);              // wait for a second
-  }
-  return;
 }
 
