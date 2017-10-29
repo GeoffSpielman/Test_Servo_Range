@@ -1,3 +1,4 @@
+//Created by Geoff Spielman on 2017-10-29
 /* HS-5245MG SERVO (camera pitch) website info:  
  *  No load speed at 4.8V: 0.15sec/60°
  *  Max PWM range:  750-2250μsec
