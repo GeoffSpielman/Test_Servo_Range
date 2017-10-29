@@ -7,11 +7,12 @@
  *  Deadband width: 1 μs 
 */
 
-/* for writeMicroseconds, on standard servos: 
- *    1000 is fully counter-clockwise
- *    2000 is fully clockwise
- *    1500 is in the middle.
- */
+/* HS-1425CR SERVO (camera yaw) website info:  
+ *  No load speed at 4.8V: 44 RPM
+ *  Pulse Amplitude: 3 - 5 V
+ *  Deadband width: 1 μs 
+*/
+
 
 bool testingAngles = false;
 
@@ -21,111 +22,141 @@ const int REST_ANGLE = 92;
 const int ANGLE_INCREMENT = 1;
 int pitchPos = REST_ANGLE;
 
-const int MAX_VALUE = 2230; //stops moving at 2240
-const int MIN_VALUE = 760; //stops moving at 750
-const int REST_VALUE = 1495;
-const int PWM_INCREMENT = 5;
-int curVal = REST_VALUE;
+const int PITCH_MAX_VALUE = 2230; //stops moving at 2240
+const int PITCH_MIN_VALUE = 760; //stops moving at 750
+const int PITCH_REST_VALUE = 1375;
+const int PITCH_PWM_INCREMENT = 5;
+int pitchVal = PITCH_REST_VALUE;
+
+
+const int YAW_MAX_CCW = 1610; //highest CCW speed
+const int YAW_MIN_CCW = 1508; //slowest smooth CCW speed
+const int YAW_MAX_CW = 1390; // highest CW speed 
+const int YAW_MIN_CW = 1455;//slowest smooth CW speed
+const int YAW_REST_VALUE = 1480; //starts CW at 1454, starts CCW at 1506
+const int YAW_PWM_INCREMENT = 1;
+int yawVal = YAW_REST_VALUE;
+
 
 
 #include <Servo.h>
 char input[20];
 Servo pitchServo;
+Servo yawServo;
 
 void setup() {
   Serial.begin(9600);
   Serial.println("---- Start -----");
-  pitchServo.attach(9);  // servo should be plugged into pin 9
+  pitchServo.attach(9);  // pitch servo should be plugged into pin 9
+  yawServo.attach(6);    // yaw servo should be plugged into pin 6
   
   if (testingAngles){
     pitchServo.write(REST_ANGLE);
   }
   else{
-    pitchServo.writeMicroseconds(REST_VALUE);
+    pitchServo.writeMicroseconds(PITCH_REST_VALUE);
   }
+  yawServo.writeMicroseconds(YAW_REST_VALUE);
 }
 
 void loop() {
-  Serial.print("cur: ");
-  Serial.print(testingAngles ? pitchPos: curVal);
-  Serial.println(". Jump to max (h), increase (i), decrease (d), jump to min (l), rest posiion (r), or stop (s)?");
+  Serial.print("Pitch cur: ");
+  Serial.print(testingAngles ? pitchPos: pitchVal);
+  Serial.println("\t\t increase: i, decrease: d, highest: h, lowest: l, rest: r");
+  Serial.print("Yaw cur: ");
+  Serial.print(yawVal);
+  Serial.println("\t\t increase: w, decrease: e, top CCW: t, top CW: y \t\t STOP: s");
   Serial.read();
 
   while (!Serial.available());
   Serial.readString().toCharArray(input, 20);
 
+  if (input[0] == 's' || input[0] == 's'){
+    pitchServo.writeMicroseconds(PITCH_REST_VALUE);
+    yawServo.writeMicroseconds(YAW_REST_VALUE);
+    Serial.println("--- Ending Program ---");
+    while(1){};
+  }
+
   if (testingAngles){
     switch (input[0]){
       case 'i':
           pitchPos += ANGLE_INCREMENT;
-          pitchServo.write(pitchPos); 
           break;
       case 'I':
           pitchPos += 3*ANGLE_INCREMENT;
-          pitchServo.write(pitchPos); 
           break;
       case 'd':
           pitchPos -= ANGLE_INCREMENT;
-          pitchServo.write(pitchPos); 
           break;
       case 'D':
           pitchPos -= 3*ANGLE_INCREMENT;
-          pitchServo.write(pitchPos); 
           break;
       
       case 'h':
           pitchPos = MAX_ANGLE;
-          pitchServo.write(pitchPos); 
           break;
      case 'l':
           pitchPos = MIN_ANGLE;
-          pitchServo.write(pitchPos); 
           break;
     case 'r':
           pitchPos = REST_ANGLE;
-          pitchServo.write(pitchPos); 
-          break;
-    case 's':
-          Serial.println("--- Ending Program ---");
-          while(1){};
           break;
     }
+    pitchServo.write(pitchPos); 
   }
   else{
     switch (input[0]){
       case 'i':
-          curVal += PWM_INCREMENT;
-          pitchServo.write(curVal); 
+          pitchVal += PITCH_PWM_INCREMENT;
           break;
       case 'I':
-          curVal += 3*PWM_INCREMENT;
-          pitchServo.write(curVal); 
+          pitchVal += 3*PITCH_PWM_INCREMENT;
           break;
       case 'd':
-          curVal -= PWM_INCREMENT;
-          pitchServo.write(curVal); 
+          pitchVal -= PITCH_PWM_INCREMENT;
           break;
       case 'D':
-          curVal -= 3*PWM_INCREMENT;
-          pitchServo.write(curVal); 
+          pitchVal -= 3*PITCH_PWM_INCREMENT;
           break;
       case 'h':
-          curVal = MAX_VALUE;
-          pitchServo.write(curVal); 
+          pitchVal = PITCH_MAX_VALUE;
           break;
      case 'l':
-          curVal = MIN_VALUE;
-          pitchServo.write(curVal); 
+          pitchVal = PITCH_MIN_VALUE;
           break;
-    case 'r':
-          curVal = REST_VALUE;
-          pitchServo.write(curVal); 
-          break;
-     case 's':
-          Serial.println("--- Ending Program ---");
-          while(1){};
+      case 'r':
+          pitchVal = PITCH_REST_VALUE;
           break;
     }
+    pitchServo.write(pitchVal); 
   }
+
+  
+  switch(input[0]){
+    case 'w':
+      yawVal += YAW_PWM_INCREMENT;
+      break;
+    case 'W':
+      yawVal += 10 * YAW_PWM_INCREMENT;
+      break;
+    case 'e':
+      yawVal -= YAW_PWM_INCREMENT;
+      break;
+    case 'E':
+      yawVal -= 10 * YAW_PWM_INCREMENT;
+      break;
+    case 'r':
+      yawVal = YAW_REST_VALUE;
+      break;
+    case 't':
+      yawVal = YAW_MAX_CCW;
+      break;
+    case 'y':
+      yawVal = YAW_MAX_CW;
+      break;
+    
+  }
+  yawServo.writeMicroseconds(yawVal);
 }
 
